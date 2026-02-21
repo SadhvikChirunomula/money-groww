@@ -5,6 +5,53 @@ Stock data fetching module using yfinance.
 import yfinance as yf
 import pandas as pd
 import streamlit as st
+from src.config import POPULAR_TICKERS
+
+
+def search_tickers(query: str) -> list[tuple[str, str]]:
+    """
+    Search Yahoo Finance for tickers matching *query*.
+
+    Returns a list of ``(display_label, symbol)`` tuples filtered to Indian
+    NSE stocks (``.NS`` suffix).  Falls back to matching entries from
+    ``POPULAR_TICKERS`` when the API returns nothing.
+    """
+    if not query or len(query) < 1:
+        return []
+
+    results: list[tuple[str, str]] = []
+
+    # ── Yahoo Finance search API via yfinance ────────────────────
+    try:
+        search = yf.Search(query, max_results=10)
+        for q in search.quotes or []:
+            symbol = q.get("symbol", "")
+            name = q.get("shortname") or q.get("longname") or symbol
+            exchange = q.get("exchDisp", "")
+            # Only keep NSE stocks
+            if symbol.endswith(".NS"):
+                label = f"{symbol.replace('.NS', '')} — {name}  ({exchange})"
+                results.append((label, symbol))
+    except Exception:
+        pass
+
+    # ── Fallback: match against the built-in POPULAR_TICKERS list ─
+    if not results:
+        q_upper = query.strip().upper()
+        for _cat, tickers in POPULAR_TICKERS.items():
+            for t in tickers:
+                if q_upper in t.upper().replace(".NS", ""):
+                    label = t.replace(".NS", "")
+                    results.append((label, t))
+
+    # Deduplicate keeping order
+    seen: set[str] = set()
+    unique: list[tuple[str, str]] = []
+    for label, sym in results:
+        if sym not in seen:
+            seen.add(sym)
+            unique.append((label, sym))
+    return unique
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes

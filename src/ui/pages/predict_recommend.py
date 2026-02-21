@@ -4,7 +4,6 @@ import streamlit as st
 import pandas as pd
 
 from src.config import CURRENCY_SYMBOL as C
-from src.utils import ensure_ns_suffix
 from src.data.fetcher import fetch_stock_data, get_stock_info
 from src.analysis.predictor import predict_prices
 from src.analysis.signals import (
@@ -17,22 +16,15 @@ from src.ui.charts import (
 )
 
 
-def render(quick_pick: str) -> None:
+def render(ticker: str) -> None:
     st.subheader("🔮 Predict & Recommend")
     st.caption(
         "ML-powered price predictions + technical signal analysis "
         "to help decide if it's worth investing."
     )
 
-    col_t, col_p = st.columns([2, 3])
-    with col_t:
-        ticker = ensure_ns_suffix(
-            st.text_input("Enter stock ticker", value=quick_pick,
-                          placeholder="e.g. RELIANCE, TCS", key="pred_ticker")
-        )
-
     if not ticker:
-        st.info("Enter a ticker symbol to get started.")
+        st.info("Search or pick a stock from the sidebar to get started.")
         st.stop()
 
     # Fetch enough data — need ≥200 days for SMA-200 + ML features
@@ -47,8 +39,7 @@ def render(quick_pick: str) -> None:
         )
         st.stop()
 
-    with col_p:
-        st.markdown(f"**{info['name']}** — {info['sector']} · {info['industry']}")
+    st.markdown(f"**{info['name']}** — {info['sector']} · {info['industry']}")
 
     # ── Run prediction ────────────────────────────────────────────
     with st.spinner("Running prediction models…"):

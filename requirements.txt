@@ -1,4 +1,5 @@
 streamlit>=1.30.0
+streamlit-searchbox>=0.1.14
 plotly>=5.18.0
 yfinance>=0.2.36
 pandas>=2.1.0

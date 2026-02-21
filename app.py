@@ -6,8 +6,11 @@ dispatches to the page renderers in ``src.ui.pages``.
 """
 
 import streamlit as st
+from streamlit_searchbox import st_searchbox
 
 from src.config import POPULAR_TICKERS, PERIOD_OPTIONS
+from src.data.fetcher import search_tickers
+from src.utils import ensure_ns_suffix
 from src.ui.pages import stock_analysis, predict_recommend, investment_simulator, portfolio_comparison
 
 # ── Page config ───────────────────────────────────────────────────────
@@ -51,6 +54,19 @@ with st.sidebar:
 
     st.divider()
 
+    # --- Searchable ticker input ---
+    st.subheader("🔍 Search Stock")
+    searched = st_searchbox(
+        search_tickers,
+        placeholder="Type company name or ticker…",
+        key="ticker_search",
+        clear_on_submit=False,
+    )
+    # searched is either a symbol string (from tuple value) or None
+
+    st.divider()
+
+    # --- Quick pick fallback ---
     st.subheader("Quick Pick")
     category = st.selectbox("Category", list(POPULAR_TICKERS.keys()))
     quick_pick = st.selectbox("Ticker", POPULAR_TICKERS[category])
@@ -61,13 +77,16 @@ with st.sidebar:
     selected_period_label = st.selectbox("Period", list(PERIOD_OPTIONS.keys()), index=3)
     selected_period = PERIOD_OPTIONS[selected_period_label]
 
+# Resolve the ticker: search overrides quick pick
+active_ticker = ensure_ns_suffix(searched) if searched else quick_pick
+
 # ── Page router ───────────────────────────────────────────────────────
 if page == "📊 Stock Analysis":
-    stock_analysis.render(quick_pick, selected_period)
+    stock_analysis.render(active_ticker, selected_period)
 elif page == "🔮 Predict & Recommend":
-    predict_recommend.render(quick_pick)
+    predict_recommend.render(active_ticker)
 elif page == "💰 Investment Simulator":
-    investment_simulator.render(quick_pick, selected_period)
+    investment_simulator.render(active_ticker, selected_period)
 elif page == "📁 Portfolio Comparison":
     portfolio_comparison.render(selected_period)
 

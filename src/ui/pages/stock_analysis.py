@@ -3,7 +3,6 @@
 import streamlit as st
 
 from src.config import CURRENCY_SYMBOL as C
-from src.utils import ensure_ns_suffix
 from src.data.fetcher import fetch_stock_data, get_stock_info
 from src.analysis.indicators import (
     add_sma, add_ema, compute_daily_returns, compute_stats,
@@ -11,18 +10,12 @@ from src.analysis.indicators import (
 from src.ui.charts import plot_price_chart, plot_returns_distribution
 
 
-def render(quick_pick: str, selected_period: str) -> None:
-    col_input, col_info = st.columns([2, 3])
-
-    with col_input:
-        ticker = ensure_ns_suffix(
-            st.text_input("Enter stock ticker", value=quick_pick,
-                          placeholder="e.g. RELIANCE, TCS, INFY")
-        )
-
+def render(ticker: str, selected_period: str) -> None:
     if not ticker:
-        st.info("Enter a ticker symbol to get started.")
+        st.info("Search or pick a stock from the sidebar to get started.")
         st.stop()
+
+    col_info = st.container()
 
     # Fetch data
     with st.spinner(f"Fetching data for **{ticker}**…"):
@@ -34,8 +27,7 @@ def render(quick_pick: str, selected_period: str) -> None:
         st.stop()
 
     # ── Stock info banner ─────────────────────────────────────────
-    with col_info:
-        st.markdown(f"**{info['name']}** — {info['sector']} · {info['industry']}")
+    col_info.markdown(f"**{info['name']}** — {info['sector']} · {info['industry']}")
 
     stats = compute_stats(df)
 

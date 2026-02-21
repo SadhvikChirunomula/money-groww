@@ -3,19 +3,20 @@
 import streamlit as st
 
 from src.config import CURRENCY_SYMBOL as C
-from src.utils import ensure_ns_suffix
 from src.data.fetcher import fetch_stock_data
 from src.analysis.simulator import simulate_investment, simulate_sip
 from src.ui.charts import plot_investment_growth, plot_sip_growth
 
 
-def render(quick_pick: str, selected_period: str) -> None:
+def render(ticker: str, selected_period: str) -> None:
     st.subheader("💰 Investment Growth Simulator")
     st.caption("See how a lump-sum or SIP investment would have grown over time.")
 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        ticker = ensure_ns_suffix(st.text_input("Ticker", value=quick_pick))
+    if not ticker:
+        st.info("Search or pick a stock from the sidebar to get started.")
+        st.stop()
+
+    col2, col3 = st.columns(2)
     with col2:
         invest_mode = st.radio("Mode", ["Lump Sum", "Monthly SIP"], horizontal=True)
     with col3:
@@ -29,10 +30,6 @@ def render(quick_pick: str, selected_period: str) -> None:
                 f"Monthly SIP Amount ({C})",
                 min_value=500, value=5000, step=500,
             )
-
-    if not ticker:
-        st.info("Enter a ticker symbol.")
-        st.stop()
 
     with st.spinner(f"Simulating investment in **{ticker}**…"):
         df = fetch_stock_data(ticker, period=selected_period)
