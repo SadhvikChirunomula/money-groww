@@ -177,4 +177,4 @@ verdict displayed on the dashboard.
 
 ## 📜 Licence
 
-MIT — feel free to use, modify, and distribute.
+MIT © 2026 **Sadhvik Chirunomula** — feel free to use, modify, and distribute.

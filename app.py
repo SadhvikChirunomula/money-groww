@@ -118,4 +118,4 @@ elif page == "📁 Portfolio Comparison":
 
 # ── Footer ────────────────────────────────────────────────────────────
 st.divider()
-st.caption("Money Grow · Indian Stock Market · Data from Yahoo Finance · Not financial advice · Built with Streamlit & Plotly")
+st.caption("© 2026 Sadhvik Chirunomula · Money Grow · Indian Stock Market · Data from Yahoo Finance · Not financial advice · Built with Streamlit & Plotly")
