@@ -84,30 +84,7 @@ The dashboard opens at **<http://localhost:8501>**.
 
 ---
 
-## � How to Find a Stock Ticker
-
-The app uses **NSE (National Stock Exchange)** ticker symbols. You can type just the company name part — the app auto-appends `.NS` for you.
-
-| Company | What to type | Full Yahoo Finance symbol |
-|---|---|---|
-| Reliance Industries | `RELIANCE` | RELIANCE.NS |
-| Tata Consultancy Services | `TCS` | TCS.NS |
-| Infosys | `INFY` | INFY.NS |
-| HDFC Bank | `HDFCBANK` | HDFCBANK.NS |
-| State Bank of India | `SBIN` | SBIN.NS |
-
-### Where to look up tickers
-
-1. **Inside the app** — use the **Quick Pick** dropdown in the sidebar. It has pre-loaded tickers across sectors (Nifty 50, IT, Banking, Auto, Pharma, Energy, FMCG).
-2. **NSE website** — search on [nseindia.com](https://www.nseindia.com) → the ticker is the **Symbol** column (e.g. `RELIANCE`, `TCS`).
-3. **Yahoo Finance** — search on [finance.yahoo.com](https://finance.yahoo.com) → look for symbols ending in `.NS` (NSE) or `.BO` (BSE).
-4. **Groww / Zerodha** — the ticker shown on these platforms usually matches the NSE symbol.
-
-> **Tip:** You don't need to type `.NS` — the app adds it automatically. Just enter the company's NSE symbol like `RELIANCE`, `TATAMOTORS`, `WIPRO`, etc.
-
----
-
-## �📦 Dependencies
+## 📦 Dependencies
 
 | Package            | Purpose                 |
 | ------------------ | ----------------------- |
