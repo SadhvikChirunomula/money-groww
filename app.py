@@ -11,7 +11,10 @@ from streamlit_searchbox import st_searchbox
 from src.config import POPULAR_TICKERS, PERIOD_OPTIONS
 from src.data.fetcher import search_tickers
 from src.utils import ensure_ns_suffix
-from src.ui.pages import stock_analysis, predict_recommend, investment_simulator, portfolio_comparison
+from src.ui.pages import (
+    stock_analysis, predict_recommend, investment_simulator,
+    portfolio_comparison, browse_stocks,
+)
 
 # ── Page config ───────────────────────────────────────────────────────
 st.set_page_config(
@@ -20,6 +23,23 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# ── Handle navigation from Browse page ────────────────────────────────
+# When a user clicks "Analyse" or "Predict" on a stock card, these
+# session-state keys are set and we redirect to the target page.
+NAV_PAGES = [
+    "🏢 Browse Stocks",
+    "📊 Stock Analysis",
+    "🔮 Predict & Recommend",
+    "💰 Investment Simulator",
+    "📁 Portfolio Comparison",
+]
+
+if "nav_page" in st.session_state:
+    _target_page = st.session_state.pop("nav_page")
+    default_page_idx = NAV_PAGES.index(_target_page) if _target_page in NAV_PAGES else 0
+else:
+    default_page_idx = 0
 
 # ── Custom CSS ────────────────────────────────────────────────────────
 st.markdown("""
@@ -47,8 +67,8 @@ with st.sidebar:
 
     page = st.radio(
         "Dashboard",
-        ["📊 Stock Analysis", "🔮 Predict & Recommend",
-         "💰 Investment Simulator", "📁 Portfolio Comparison"],
+        NAV_PAGES,
+        index=default_page_idx,
         label_visibility="collapsed",
     )
 
@@ -62,7 +82,6 @@ with st.sidebar:
         key="ticker_search",
         clear_on_submit=False,
     )
-    # searched is either a symbol string (from tuple value) or None
 
     st.divider()
 
@@ -77,11 +96,18 @@ with st.sidebar:
     selected_period_label = st.selectbox("Period", list(PERIOD_OPTIONS.keys()), index=3)
     selected_period = PERIOD_OPTIONS[selected_period_label]
 
-# Resolve the ticker: search overrides quick pick
-active_ticker = ensure_ns_suffix(searched) if searched else quick_pick
+# Resolve the ticker: nav_ticker > search > quick pick
+if "nav_ticker" in st.session_state:
+    active_ticker = st.session_state.pop("nav_ticker")
+elif searched:
+    active_ticker = ensure_ns_suffix(searched)
+else:
+    active_ticker = quick_pick
 
 # ── Page router ───────────────────────────────────────────────────────
-if page == "📊 Stock Analysis":
+if page == "🏢 Browse Stocks":
+    browse_stocks.render()
+elif page == "📊 Stock Analysis":
     stock_analysis.render(active_ticker, selected_period)
 elif page == "🔮 Predict & Recommend":
     predict_recommend.render(active_ticker)

@@ -43,14 +43,15 @@ def render(ticker: str) -> None:
 
     # ── Run prediction ────────────────────────────────────────────
     with st.spinner("Running prediction models…"):
-        pred_result = predict_prices(df, days_ahead=2)
+        pred_result = predict_prices(df, days_ahead=3)
 
     if "error" in pred_result:
         st.error(pred_result["error"])
         st.stop()
 
-    # ── Predicted prices ──────────────────────────────────────────
+    # ── 3-Day Price Forecast ───────────────────────────────────────
     st.divider()
+    st.markdown("### 📅 3-Day Price Forecast")
     current_price = pred_result["current_price"]
     predictions = pred_result["predictions"]
 
@@ -60,7 +61,7 @@ def render(ticker: str) -> None:
         day_label = p["date"].strftime("%a %d %b")
         change = p["predicted_price"] - current_price
         cols[i + 1].metric(
-            f"Predicted — {day_label}",
+            f"Day {i + 1} — {day_label}",
             f"{C}{p['predicted_price']:,.2f}",
             delta=f"{C}{change:+.2f} ({(change / current_price) * 100:+.2f}%)",
         )
@@ -69,6 +70,10 @@ def render(ticker: str) -> None:
     # ── Prediction chart ──────────────────────────────────────────
     fig_pred = plot_prediction(df, pred_result, ticker)
     st.plotly_chart(fig_pred, use_container_width=True)
+
+    # ── When to Buy / Sell ────────────────────────────────────────
+    if len(predictions) >= 2:
+        _render_timing_advice(predictions, current_price)
 
     # ── Model breakdown ───────────────────────────────────────────
     with st.expander("🤖 Model Details", expanded=False):
@@ -190,3 +195,92 @@ def render(ticker: str) -> None:
         "This is NOT financial advice. Always do your own research and consult "
         "a financial advisor before investing."
     )
+
+
+# ──────────────────────────────────────────────────────────────────
+#  Timing advice helper
+# ──────────────────────────────────────────────────────────────────
+def _render_timing_advice(
+    predictions: list[dict], current_price: float
+) -> None:
+    """Show actionable buy / sell / hold timing based on the 3-day forecast."""
+    prices = [current_price] + [p["predicted_price"] for p in predictions]
+    dates = ["Today"] + [p["date"].strftime("%a %d %b") for p in predictions]
+
+    peak_idx = int(max(range(len(prices)), key=lambda i: prices[i]))
+    trough_idx = int(min(range(len(prices)), key=lambda i: prices[i]))
+
+    peak_change = (prices[peak_idx] - current_price) / current_price * 100
+    trough_change = (prices[trough_idx] - current_price) / current_price * 100
+
+    trend_up = all(prices[i] <= prices[i + 1] for i in range(len(prices) - 1))
+    trend_down = all(prices[i] >= prices[i + 1] for i in range(len(prices) - 1))
+
+    st.markdown("### ⏰ When to Buy & Sell")
+
+    b_col, s_col = st.columns(2)
+
+    with b_col:
+        if trough_idx == 0:
+            buy_msg = "**Now** — today's price is the lowest in the forecast window."
+            buy_color = "#00C853"
+        elif trend_down:
+            buy_msg = (
+                f"**Wait** — price is predicted to keep falling. "
+                f"Best entry may be **{dates[trough_idx]}** "
+                f"({C}{prices[trough_idx]:,.2f}, {trough_change:+.1f}%)."
+            )
+            buy_color = "#FF9100"
+        else:
+            buy_msg = (
+                f"**{dates[trough_idx]}** looks cheapest at "
+                f"{C}{prices[trough_idx]:,.2f} ({trough_change:+.1f}%)."
+            )
+            buy_color = "#66BB6A"
+
+        st.markdown(
+            f'<div style="background:#1E1E2E; border-left:5px solid {buy_color}; '
+            f'border-radius:8px; padding:16px; margin:4px 0;">'
+            f'<h4 style="color:{buy_color}; margin:0;">🟢 Best Time to Buy</h4>'
+            f'<p style="color:#FAFAFA; margin-top:6px;">{buy_msg}</p></div>',
+            unsafe_allow_html=True,
+        )
+
+    with s_col:
+        if peak_idx == 0:
+            sell_msg = (
+                "**Now** — today's price is the highest. "
+                "Consider selling or booking profit."
+            )
+            sell_color = "#FF1744"
+        elif trend_up:
+            sell_msg = (
+                f"**Hold for now** — price is trending up. "
+                f"Peak expected on **{dates[peak_idx]}** "
+                f"({C}{prices[peak_idx]:,.2f}, {peak_change:+.1f}%)."
+            )
+            sell_color = "#00C853"
+        else:
+            sell_msg = (
+                f"**{dates[peak_idx]}** looks like the best exit at "
+                f"{C}{prices[peak_idx]:,.2f} ({peak_change:+.1f}%)."
+            )
+            sell_color = "#FF9100"
+
+        st.markdown(
+            f'<div style="background:#1E1E2E; border-left:5px solid {sell_color}; '
+            f'border-radius:8px; padding:16px; margin:4px 0;">'
+            f'<h4 style="color:{sell_color}; margin:0;">🔴 Best Time to Sell</h4>'
+            f'<p style="color:#FAFAFA; margin-top:6px;">{sell_msg}</p></div>',
+            unsafe_allow_html=True,
+        )
+
+    # Quick trajectory summary
+    arrows = []
+    for i in range(1, len(prices)):
+        diff = prices[i] - prices[i - 1]
+        arrows.append("📈" if diff > 0 else ("📉" if diff < 0 else "➡️"))
+    trajectory = " → ".join(
+        f"{dates[i]} {arrows[i - 1]} {C}{prices[i]:,.2f}" for i in range(1, len(prices))
+    )
+    st.caption(f"Forecast trajectory: Today {C}{current_price:,.2f} → {trajectory}")
